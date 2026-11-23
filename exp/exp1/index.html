@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>实验一 · 基于WebGL的交互式图形绘制</title>
+  <style>
+    body {
+      margin: 20px;
+      font-family: "Microsoft YaHei", sans-serif;
+      background: #1e1e1e;
+      color: #ddd;
+    }
+    h1 { font-size: 20px; }
+    #webgl { border: 1px solid #555; background: #000; display: block; }
+    .panel {
+      display: flex; gap: 16px; margin: 12px 0;
+      align-items: center; flex-wrap: wrap;
+      background: #2a2a2a; padding: 12px; border-radius: 6px;
+      max-width: 900px;
+    }
+    .panel label { display: flex; align-items: center; gap: 6px; }
+    input[type="range"] { width: 130px; }
+    button {
+      background: #3a6ea5; color: #fff; border: none;
+      padding: 6px 14px; border-radius: 4px; cursor: pointer;
+    }
+    button:hover { background: #4a7eb5; }
+    .hint { color: #999; font-size: 13px; }
+  </style>
+</head>
+<body onload="main()">
+  <h1>实验一 · 基于 WebGL 的交互式图形绘制</h1>
+  <canvas id="webgl" width="500" height="500">
+    你的浏览器不支持 canvas，请更换浏览器。
+  </canvas>
+
+  <div class="panel">
+    <label>平移X <input id="tx" type="range" min="-1" max="1" step="0.01" value="0"></label>
+    <label>平移Y <input id="ty" type="range" min="-1" max="1" step="0.01" value="0"></label>
+    <label>旋转 <input id="angle" type="range" min="-180" max="180" value="0"></label>
+    <label>缩放 <input id="scale" type="range" min="0.2" max="2" step="0.05" value="1"></label>
+    <label>颜色 <input id="color" type="color" value="#ff8800"></label>
+  </div>
+
+  <div class="panel">
+    <button id="btnTriangle">三角形</button>
+    <button id="btnSquare">正方形</button>
+    <button id="btnStar">五角星</button>
+    <button id="btnClear">清空点</button>
+    <button id="btnReset">重置</button>
+  </div>
+
+  <p class="hint">
+    操作说明：滑动条实时变换主图形；键盘 ←→ 平移、↑↓ 缩放、r 随机颜色；
+    鼠标点击画布绘制彩色点（颜色按象限变化）；按钮切换图形 / 清空点 / 复位。
+  </p>
+
+  <script src="../lib/webgl-utils.js"></script>
+  <script src="../lib/webgl-debug.js"></script>
+  <script src="../lib/cuon-utils.js"></script>
+  <script src="../lib/cuon-matrix.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

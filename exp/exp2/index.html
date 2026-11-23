@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>实验二 · 基于WebGL的摄像漫游与环视（天空盒）</title>
+  <style>
+    body {
+      margin: 0; overflow: hidden;
+      font-family: "Microsoft YaHei", sans-serif; background: #000;
+    }
+    #webgl { display: block; cursor: grab; }
+    #hud {
+      position: fixed; top: 14px; left: 14px; z-index: 10;
+      background: rgba(10,12,20,0.65); color: #bcd; padding: 10px 14px;
+      border-radius: 8px; font-size: 13px; line-height: 1.9;
+    }
+    #hud b { color: #fff; }
+    #panel {
+      position: fixed; bottom: 14px; left: 14px; z-index: 10;
+      background: rgba(10,12,20,0.72); color: #bcd; padding: 12px 16px;
+      border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 10px;
+      user-select: none;
+    }
+    #panel .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    #panel button {
+      background: #2b3d5c; color: #e8f0ff; border: 1px solid #3d5377;
+      padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;
+    }
+    #panel button:hover { background: #3a4f74; }
+    #panel button:active { background: #4c6c9c; }
+    #panel select {
+      background: #223; color: #e8f0ff; border: 1px solid #3d5377;
+      padding: 5px 8px; border-radius: 5px; font-size: 13px;
+    }
+    #panel label { display: flex; align-items: center; gap: 6px; }
+    #panel .tag { color: #89a; margin-right: 2px; }
+  </style>
+</head>
+<body onload="main()">
+  <canvas id="webgl"></canvas>
+
+  <div id="hud">
+    <b>实验二 · 摄像漫游与环视（天空盒 + 纹理立方体）</b><br>
+    <span id="modeLabel">相机：自由漫游 Fly</span><br>
+    键盘：W/A/S/D 前后左右，E/Q 升降　鼠标拖动：环视　滚轮：缩放<br>
+    O：切换 Fly / Orbit　R：复位　（也可用下方菜单按钮）
+  </div>
+
+  <div id="panel">
+    <div class="row">
+      <span class="tag">移动：</span>
+      <button data-key="w">前进</button>
+      <button data-key="s">后退</button>
+      <button data-key="a">左移</button>
+      <button data-key="d">右移</button>
+      <button data-key="e">上升</button>
+      <button data-key="q">下降</button>
+    </div>
+    <div class="row">
+      <button id="btnMode">切换相机模式</button>
+      <button id="btnReset">复位</button>
+      <label><span class="tag">地面颜色：</span>
+        <input id="groundColorPicker" type="color" value="#808085">
+      </label>
+    </div>
+  </div>
+
+  <script src="../lib/webgl-utils.js"></script>
+  <script src="../lib/webgl-debug.js"></script>
+  <script src="../lib/cuon-utils.js"></script>
+  <script src="../lib/cuon-matrix.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
