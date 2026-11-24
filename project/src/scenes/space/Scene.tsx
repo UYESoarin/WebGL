@@ -1,76 +1,52 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import type { Mesh } from 'three'
+import { useEffect, useMemo } from 'react'
 import type { SceneRuntimeProps } from '../../types/scene'
 import { useSceneEnvironment } from '../../engine/useSceneEnvironment'
+import StarField from './components/StarField'
+import Nebula from './components/Nebula'
+import AccretionDisk from './components/AccretionDisk'
+import BlackHoleCore from './components/BlackHoleCore'
 
-const STAR_COUNT = 800
-
-/** 环境：近黑背景，无雾 */
-const ENV = {
-  background: '#000005',
-} as const
+function num(value: unknown, fallback: number): number {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
 
 /**
- * 占位场景：黑洞与太空。
- * 后续 Day 2–3 替换为分层星场、吸积盘 Shader 与屏幕空间透镜近似。
+ * 黑洞与太空 —— Phase 2 地基版。
+ *
+ * 效果清单：
+ *   - 星空：三层球壳 Points（远/中/近，大小与亮度不同）
+ *   - 星云：两层噪声平面（加法混合），只做远景层次
+ *   - 黑洞：暗球（事件视界）+ 细亮环（光子环近似）
+ *   - 吸积盘：圆环几何 + 极坐标着色（径向衰减 / 角向旋臂 / 多普勒差）
+ *
+ * 尚未实现（深化见 docs/effects/space.md）：屏幕空间引力透镜、喷流、星尘 GPU 粒子。
  */
-export default function SpaceScene({ active, onReady }: SceneRuntimeProps) {
-  useSceneEnvironment(ENV)
-  const discRef = useRef<Mesh>(null)
+export default function SpaceScene({ active, quality, params, onReady }: SceneRuntimeProps) {
+  const diskSpeed = num(params.diskSpeed, 0.8)
+  const diskIntensity = num(params.diskIntensity, 1)
+  const starDensity = num(params.starDensity, 1)
+  const nebulaIntensity = num(params.nebulaIntensity, 0.8)
+
+  const environment = useMemo(() => ({ background: '#010104' }), [])
+  useSceneEnvironment(environment)
 
   useEffect(() => {
     onReady?.()
   }, [onReady])
 
-  // 星空：分布在大球壳上的点（占位）
-  const starPositions = useMemo(() => {
-    const arr = new Float32Array(STAR_COUNT * 3)
-    for (let i = 0; i < STAR_COUNT; i++) {
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-      const r = 40 + Math.random() * 40
-      arr[i * 3] = r * Math.sin(phi) * Math.cos(theta)
-      arr[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
-      arr[i * 3 + 2] = r * Math.cos(phi)
-    }
-    return arr
-  }, [])
-
-  useFrame((_, delta) => {
-    if (!active || !discRef.current) return
-    discRef.current.rotation.z += delta * 0.3
-  })
+  const starDensityScaled = quality === 'low' ? starDensity * 0.55 : starDensity
 
   return (
     <group>
-      <ambientLight intensity={0.2} />
+      <ambientLight intensity={0.06} color="#8899ff" />
+      {/* 提供极弱的定向光，让黑洞球体边缘有轮廓，但核心仍是纯黑 */}
+      <directionalLight position={[6, 10, 8]} intensity={0.35} color="#bcd0ff" />
 
-      {/* 星空 */}
-      <points>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[starPositions, 3]} />
-        </bufferGeometry>
-        <pointsMaterial
-          color="#ffffff"
-          size={0.12}
-          sizeAttenuation
-          transparent
-          opacity={0.85}
-        />
-      </points>
-
-      {/* 事件视界（暗色球体） */}
-      <mesh>
-        <sphereGeometry args={[1.6, 48, 48]} />
-        <meshBasicMaterial color="#000000" />
-      </mesh>
-
-      {/* 吸积盘（占位：旋转发光环带） */}
-      <mesh ref={discRef} rotation-x={Math.PI / 2.4}>
-        <torusGeometry args={[3, 0.35, 16, 64]} />
-        <meshBasicMaterial color="#ff9d2e" />
-      </mesh>
+      <StarField density={starDensityScaled} />
+      <Nebula active={active} intensity={nebulaIntensity} />
+      <AccretionDisk active={active} speed={diskSpeed} intensity={diskIntensity} />
+      <BlackHoleCore />
     </group>
   )
 }

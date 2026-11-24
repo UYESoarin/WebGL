@@ -46,8 +46,8 @@ export default function UnderwaterScene({
     () => ({
       fogDensity: num(params.fogDensity, 0.045),
       causticsSpeed: num(params.causticsSpeed, 0.55),
-      causticsScale: num(params.causticsScale, 0.5),
-      causticsIntensity: num(params.causticsIntensity, 0.9),
+      causticsScale: num(params.causticsScale, 0.32),
+      causticsIntensity: num(params.causticsIntensity, 0.8),
       beamIntensity: num(params.beamIntensity, 1),
       particleCount: num(params.particleCount, 600),
       fishCount: num(params.fishCount, 48),

@@ -25,6 +25,27 @@
 
 > 该阶段刻意不使用任何外部模型/贴图：一是规避许可与体积问题，二是先把「原理正确」的管线跑通。可选外部资源清单见 `docs/RESOURCES.md`。
 
+## Phase 2 其余三场景：程序化资源（无外部文件）
+
+| 资源 | 实现位置 | 来源 | 许可 | 所有权 |
+|---|---|---|---|---|
+| 自然地形几何（fBm + ridged 山脊 + 河谷下切 + 顶点色） | `src/scenes/nature/terrain.ts` | 本项目代码生成 | 自有 | 自有 |
+| 天空穹顶（渐变 + 太阳晕） | `src/scenes/nature/components/SkyDome.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 树干/树冠（实例化 + 高度加权风动） | `src/scenes/nature/components/Trees.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 草叶（交叉面片实例化 + 风动） | `src/scenes/nature/components/GrassField.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 城市街区布局（固定种子） | `src/scenes/city/layout.ts` | 本项目代码生成 | 自有 | 自有 |
+| 建筑 + 窗户图案（片元程序化） | `src/scenes/city/components/Buildings.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 道路与车道线（自发光片元） | `src/scenes/city/components/Roads.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 交通（曲线 + 实例化车体/灯条） | `src/scenes/city/components/Traffic.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 夜雨粒子 | `src/scenes/city/components/Rain.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 星场（三层球壳 Points） | `src/scenes/space/components/StarField.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 星云（fBm 片元 + 加法混合） | `src/scenes/space/components/Nebula.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 吸积盘（圆环 + 极坐标着色） | `src/scenes/space/components/AccretionDisk.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 黑洞核心与光子环 | `src/scenes/space/components/BlackHoleCore.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 共享噪声函数（GLSL） | `src/engine/shaders/noise.ts` | 本项目代码生成 | 自有 | 自有 |
+
+> 与水下阶段相同的约定：先程序化跑通管线，外部资源按 `docs/RESOURCES.md` 的清单由用户采购后登记再接入。
+
 ## 参考素材（不参与运行时构建）
 
 | 资源 | 路径 | 用途 | 说明 |

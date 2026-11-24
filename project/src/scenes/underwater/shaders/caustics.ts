@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { NOISE_GLSL } from './noise'
+import { NOISE_GLSL } from '../../../engine/shaders/noise'
 
 /**
  * 焦散（Caustics）近似 —— 材质补丁方案。
