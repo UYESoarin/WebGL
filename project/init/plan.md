@@ -2,7 +2,7 @@
 
 > **项目名称：** VIEW（Visual Interactive Environment Worlds）  
 > **项目类型：** WebGL / 实时三维场景渲染 / 技术美术综合实践  
-> **课程周期：** 两周冲刺基线（可扩展至 3–4 周），独立开发  
+> **课程周期：** 两周冲刺基线，独立开发  
 > **技术基线：** React + TypeScript + Vite + Three.js + React Three Fiber  
 > **文档版本：** V2.1（两周冲刺与工程规范版）  
 > **文档定位：** 本文是项目范围、需求、架构、接口、开发顺序和验收的唯一总体依据；`instruction/` 用于分阶段学习与实现，不替代本文件。
