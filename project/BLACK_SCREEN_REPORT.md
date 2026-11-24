@@ -115,67 +115,67 @@ Consider adding an error boundary to your tree to customize error handling behav
 | `<Activity>` 桥在 **react-dom 渲染器**下传 null props | Node 端 jsdom 实验：`<Activity mode="hidden">` + 子组件，所有阶段 props 均为普通对象，从未 null |
 | `<Activity>` 桥在 **R3F test-renderer** 下传 null props | 用 `@react-three/test-renderer` 渲染 `<Activity mode="hidden"><Probe active/></Activity>`，props 从未 null |
 
-> 注意最后两条：两个实验都**没能复现**，但它们都没有覆盖「真实浏览器 + 真实 `<Canvas>` + 真实 WebGL 上下文」这条路径，所以**还不能据此否定 Activity 假设**。
+> 补充（根因确认后回看）：表格最后两行其实已经指向了正确答案——`<Activity>` 从不会用 null 调用子组件。null 来自我们自己的 `useState` 派发，见 §4。
 
 ---
 
-## 4. 可能根因（按可能性排序）
+## 4. 根因（已确证，并已在本机复现）
 
-### H1（中高）React 19.3.1 的 `<Activity>` 与 R3F 自带 reconciler 的交互
+**代码位置**：`src/app/SceneView.tsx:38`（修复前）
 
-- R3F **9.8.1 起**，`<Canvas>` 用 `useBridge()` 把子节点包进 its-fine 2.1.1 的 `<Activity mode="hidden"→"visible">` 桥；**该桥只在 React ≥ 19.2 才启用**，19.0/19.1 会退化成 `React.Fragment`。
-- R3F 9.8.1 CHANGELOG 原文：*"Update its-fine to 2.1.1 and bridge ancestor Activity visibility into the Canvas scene on **React 19.2 and later** … fall back to their previous behavior on React 19.0 and 19.1."*
-- 我们的组合正好落在「新路径」上：`react@19.3.1` + `fiber@9.8.2` + `its-fine@2.1.1`。
-- React 的 hidden Activity 走「prerender / offscreen」渲染路径，而 R3F 用的是**自定义 reconciler**：React 只对 DOM renderer 承诺完整语义，跨 renderer 组合存在已知空白区（上游 issue [#3939](https://github.com/pmndrs/react-three-fiber/issues/3939)、PR [#3943](https://github.com/pmndrs/react-three-fiber/pull/3943) 都在修 Activity 相关崩溃）。
-- **判别实验（不改业务代码）**：`react`/`react-dom` 降到 `19.1.10`（`React.Activity` 不存在 → 桥退化为 Fragment）。若错误消失即证实。
+```ts
+meta.load().then((mod) => {
+  if (!cancelled) setSceneComponent(mod.default)   // ← 就是这里
+})
+```
 
-### H2（中）极新的 dev 工具链（Vite 8.3.8 + plugin-react 6.3.0 + TS 7.0.2）
+`mod.default` 是场景组件函数。React 的 `useState` setter 有一条语义：**如果传入的参数是函数，它会被当作「更新函数（updater）」，在下次渲染时以 `prevState` 为实参调用**，即渲染期执行 `fn(prevState)`。
 
-- 参考原型（你提供的压缩包）用的是 `vite ^6.0.7` + `@vitejs/plugin-react ^4.3.4` + `typescript ~5.7.2`，而本仓库是 `vite 8.3.8` + `plugin-react 6.3.0` + `typescript 7.0.2`。
-- dev 模式下 react-refresh 会给组件包一层注册/重渲染逻辑；与 R3F 自定义 reconciler 组合在极新版本上未必经过充分验证。
-- **判别实验（0 改动）**：`npm run build && npm run preview`，在**生产包**（无 HMR / 无 Fast Refresh）下复现一次。若 preview 正常 → 问题在 dev 层；若同样崩溃 → 问题在运行时层。
+于是渲染期实际执行的是 `UnderwaterScene(null)`（初始 state 就是 `null`），而函数签名 `({ active, onReady }: SceneRuntimeProps)` 对 `null` 解构 → 抛出本次错误。
 
-### H3（低）Canvas root 生命周期 / 上下文丢失
+这一条链解释了全部现象：
 
-- 现象里的「返回后首页也黑」符合 WebGL 上下文被销毁或 React 树整体崩溃的特征；上游 #3939 描述过「hidden Activity 会销毁 Canvas root，之后 render() 无效」。
-- 但这更解释「黑」，不解释「null props」，所以列在 H1/H2 之后。
+| 现象 | 解释 |
+|---|---|
+| `Cannot destructure property 'active' of ... null` | updater 被以 `prevState === null` 调用 |
+| 堆栈 `at UnderwaterScene (Scene.tsx:20:43) at SceneView (SceneView.tsx:25:47)` | 调用点就在 `SceneView` 的 `useState` 派发/渲染期，中间没有 `SceneViewport` / `Canvas` 帧 |
+| React 警告「An error occurred in the <SceneView> component」 | 错误确实发生在 `SceneView` 渲染期 |
+| 错误是 **Uncaught**，`ErrorBoundary` 没接住 | 错误边界在 `SceneView` 内部，其**上方**没有边界，整棵 root 被卸载 |
+| **返回首页也黑** | root 树整体崩溃，不只是场景页 |
+| 报错行号随重构 `13:43` → `20:43` 移动 | 行号就是场景函数签名那一行，随代码上移 |
+| Node 端两个 Activity 实验都复现不出 null props | 因为 null 根本不来自 R3F/React 的 Activity 路径 |
+
+**本机复现（不需要浏览器）**：
+
+```bash
+node -e "const S=(props)=>{const {active}=props;return active}; try{S(null)}catch(e){console.log(e.message)}"
+# → Cannot destructure property 'active' of 'props' as it is null.
+```
+
+> 教训：这是 React 里最经典的语义陷阱之一。`setState` 的 updater 形式必须是 `setState(() => value)`；直接传函数值时要再包一层。它**无法被 TypeScript 拦住**——`ComponentType` 本身就是函数，恰好满足 updater 的签名 `(prev) => next`，类型检查完全通过。
 
 ---
 
-## 5. 最小修复方案（Phase 2，一次只动一处，每步留 commit）
+## 5. 已实施的修复
 
-> 原则：先加证据，再改代码；每次只改一个变量；不吞异常、不用黑背景遮错。
+| # | 改动 | 说明 |
+|---|---|---|
+| 1 | `src/app/SceneView.tsx` → `setSceneComponent(() => mod.default)` | **根因修复**；并在代码旁写了注释记录该陷阱 |
+| 2 | `src/app/SceneView.tsx`：场景组件就绪后才挂载 `<SceneViewport>` | Canvas 首次 render 即带完整子树，加载阶段只显示 LoadingScreen |
+| 3 | `package.json`：`react`/`react-dom` 精确 `19.1.10`，`@types/react` `19.1.17`、`@types/react-dom` `19.1.11` | 诊断期为排除 Activity 桥而做，**保留**为稳定性选择（19.1 无 Activity 桥，路径更短）；与本 bug 无因果关系 |
+| 4 | 工具链保持 `vite 8.3.8` + `plugin-react 6.3.0` + `ts 7.0.2` | 实测降 vite 6 会在 `esbuild postinstall` 处 `spawn EPERM`（沙箱禁止 npm 安装脚本 spawn），不可行 |
 
-**Step 0 — 建立可回滚基线（0 改动）**
-```bash
-git add -A && git commit -m "checkpoint: phase1 诊断基线（黑屏未修）"
-```
-回滚点：`git reset --hard 4f1f7e3`（本次会话之前最后一次干净提交）。
+**回滚点**
 
-**Step 1 — 二分 dev-only vs runtime（0 代码改动）**
-```bash
-npm run build && npm run preview
-```
-在 preview 里复现一次，记录是否仍报 `Cannot destructure property 'active'`。
+- 修复前干净基线：`4f1f7e3`（`git reset --hard 4f1f7e3`）
+- 救援提交：`12cac09`（依赖 + 挂载顺序），本根因修复另起一次提交
 
-**Step 2 — 若 preview 也崩：降 React（一条命令级改动）**
-```bash
-npm i react@19.1.10 react-dom@19.1.10 --cache ./.npm-cache
-npm i -D @types/react@19.1.17 @types/react-dom@19.1.11 --cache ./.npm-cache
-npm run build && npm run preview
-```
-判定：错误消失 → H1 成立；仍崩溃 → 继续 Step 3。
+**本机验证**
 
-**Step 3 — 若 preview 正常（dev-only）：换 dev 工具链**
-- 先 `vite.config.ts` 里 `react({ fastRefresh: false })` 验证一次；
-- 确认后改 `@vitejs/plugin-react-swc`，或把 `vite` 降到 `^6` / `plugin-react` 降到 `^4`（与参考原型对齐）。
-
-**Step 4 — 稳定后先只画一个 Box（保留同一 Canvas）**
-`SceneViewport` 内临时直出 `<mesh><boxGeometry/><meshStandardMaterial/></mesh>` + 环境光 + 背景色，验证：进入、显示、Orbit 相机、返回、再次进入。
-
-**Step 5 — 恢复四个场景的基础几何体**（仍不引入任何 Shader / 后处理 / 外部模型）。
-**Step 6 — 加载失败提示 + 重试入口**（临时让 `load()` reject 验证一次，然后恢复）。
-**Step 7 — 连续切换 10 次 + `npm run build` + 记录 TEST_REPORT。**
+- `npm run build`（`tsc -b && vite build`）✅ 600 模块
+- dev `http://127.0.0.1:5173/`、preview `http://127.0.0.1:4173/` 均 200；preview 下 `/scene/underwater` 深链接 200
+- `npm ls react` 单副本；`React.Activity === undefined`
+- dev server 已返回含修复的模块（`setSceneComponent(() => mod.default)`）
 
 ---
 
@@ -192,16 +192,21 @@ npm run build && npm run preview
 | 错误处理 | 无 ErrorBoundary（崩了就是白/黑） | ErrorBoundary + ErrorScreen + 运行时覆盖层 |
 | 相机 | `<Canvas camera={{position,fov}}>` 内联对象 + `OrbitControls makeDefault` | 模块常量相机 + 自建 `CameraController` |
 
-**参考价值**：原型刻意回避了「动态 import、外部 store、手写路由、持久 Canvas + ErrorBoundary」这四项复杂度。它证明**最小稳定基线**的形状；我们引入的四项里，至少「动态 import + 持久 Canvas」是本次崩溃的可疑源头（场景组件是异步出现的新元素类型，由 R3F root 二次 `render()` 挂载）。
+**参考价值**：原型刻意回避了「动态 import、外部 store、手写路由、持久 Canvas + ErrorBoundary」这四项复杂度，证明最小稳定基线的形状。但本次根因**与之无关**——是 `useState` updater 语义陷阱；原型里 `useState<SceneId|null>(null)` 存的是**字符串 id**（不是组件函数），所以天然不会触发。
 
 ---
 
-## 7. 需要你确认的事项（Phase 2 前）
+## 7. Phase 2 验收清单（浏览器复测）
 
-1. **是否允许 `npm run preview` 复现**（0 代码改动，只是换运行方式）？
-2. **是否允许降级 `react`/`react-dom` 到 19.1.10**（若 Step 2 判定为 H1）？
-3. **是否允许把 `vite 8` / `plugin-react 6` 对齐到参考原型的 `vite 6` / `plugin-react 4`**（若 Step 3 判定为 dev-only）？
-4. **诊断期新增物**：`scripts/*.mjs`（6 个诊断脚本）、devDependencies（`jsdom`、`@react-three/test-renderer`、`puppeteer-core`）、`.tmp-ref/`（你给的参考代码解压副本）。这些**都不是产品代码**，你同意后我会在 Step 0 之前清理/或保留并 gitignore。
+1. 首页正常显示四个场景卡片
+2. 进入场景：不黑屏、URL 变 `/scene/:id`、HUD 可见
+3. 相机：左键旋转 / 右键平移 / 滚轮缩放 / `R` 或按钮重置视角
+4. 返回：回首页、URL 变 `/`、首页正常（不再黑屏）
+5. 四个场景互切 + 连续切换 10 次
+6. 加载失败路径：需要时临时让 `load()` reject，验证重试按钮
+7. `npm run build` 通过
+
+通过后进入效果实现阶段（`init/instruction/02`：水下场景的焦散 / 体积雾 / 浮游粒子，按原理逐项落地）。
 
 ---
 

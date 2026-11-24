@@ -35,7 +35,11 @@ export default function SceneView() {
     meta
       .load()
       .then((mod) => {
-        if (!cancelled) setSceneComponent(mod.default)
+        // 注意：必须用函数式写法 setSceneComponent(() => mod.default)。
+        // 直接写 setSceneComponent(mod.default) 时，React 会把函数参数当作
+        // 「更新函数」调用：mod.default(prevState) 即以 prevState=null 调用场景
+        // 组件本身，于是报 "Cannot destructure property 'active' of 'object null'"。
+        if (!cancelled) setSceneComponent(() => mod.default)
       })
       .catch((err: unknown) => {
         if (!cancelled) {
