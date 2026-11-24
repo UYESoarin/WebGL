@@ -2,7 +2,12 @@ import { Canvas } from '@react-three/fiber'
 import type { ComponentType } from 'react'
 import { sceneRegistry } from '../app/sceneRegistry'
 import CameraController from './CameraController'
-import type { Quality, SceneId, SceneRuntimeProps } from '../types/scene'
+import type {
+  Quality,
+  SceneId,
+  SceneParamValues,
+  SceneRuntimeProps,
+} from '../types/scene'
 
 /** 视口公共渲染设置（稳定引用，避免每次 render 重建触发 R3F 重应用） */
 const VIEWPORT_CAMERA = { fov: 50, near: 0.1, far: 300 }
@@ -17,6 +22,7 @@ interface SceneViewportProps {
   component: ComponentType<SceneRuntimeProps> | null
   quality: Quality
   debugEnabled: boolean
+  params: SceneParamValues
   onReady: () => void
   onError: (error: Error) => void
 }
@@ -31,6 +37,7 @@ export default function SceneViewport({
   component: SceneComponent,
   quality,
   debugEnabled,
+  params,
   onReady,
   onError,
 }: SceneViewportProps) {
@@ -49,6 +56,7 @@ export default function SceneViewport({
           active
           quality={quality}
           debugEnabled={debugEnabled}
+          params={params}
           onReady={onReady}
           onError={onError}
         />

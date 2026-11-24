@@ -596,3 +596,121 @@ button {
   background: rgba(255, 255, 255, 0.1);
   color: #ffd7d7;
 }
+
+/* ---------- 场景参数面板（D 键 / HUD「参数」按钮） ---------- */
+
+.hud-btn.active {
+  border-color: rgba(56, 189, 248, 0.8);
+  background: rgba(56, 189, 248, 0.18);
+  color: #e0f2fe;
+}
+
+.param-panel {
+  position: absolute;
+  right: 20px;
+  bottom: 72px;
+  z-index: 6;
+  width: 272px;
+  max-height: min(62vh, 560px);
+  overflow: auto;
+  padding: 12px 14px 14px;
+  border: 1px solid rgba(120, 180, 220, 0.28);
+  border-radius: 12px;
+  background: rgba(8, 18, 28, 0.86);
+  backdrop-filter: blur(10px);
+  color: #cfe6f5;
+  font-size: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+.param-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(120, 180, 220, 0.18);
+  color: #e8f4fc;
+  font-weight: 600;
+}
+
+.param-panel-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.param-panel-actions button,
+.param-panel-close {
+  padding: 2px 8px;
+  border: 1px solid rgba(120, 180, 220, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #cfe6f5;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.param-panel-actions button:hover,
+.param-panel-close:hover {
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.param-panel-empty {
+  margin: 6px 0 0;
+  color: #7f9db3;
+}
+
+.param-group {
+  margin: 10px 0 4px;
+  color: #7dd3fc;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.param-row {
+  display: grid;
+  grid-template-columns: 78px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.param-label {
+  color: #b6d3e6;
+  cursor: help;
+}
+
+.param-row input[type='range'] {
+  width: 100%;
+  accent-color: #38bdf8;
+}
+
+.param-row select {
+  grid-column: 2 / span 2;
+  padding: 3px 6px;
+  border: 1px solid rgba(120, 180, 220, 0.3);
+  border-radius: 6px;
+  background: rgba(8, 18, 28, 0.9);
+  color: #cfe6f5;
+  font-size: 12px;
+}
+
+.param-toggle {
+  justify-self: start;
+  accent-color: #38bdf8;
+}
+
+.param-value {
+  color: #e8f4fc;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.param-desc {
+  margin: 0 0 6px 78px;
+  color: #7f9db3;
+  font-size: 11px;
+  line-height: 1.45;
+}

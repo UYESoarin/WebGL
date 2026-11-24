@@ -18,6 +18,7 @@ export default function SceneView() {
   const status = useSceneController((s) => s.status)
   const quality = useSceneController((s) => s.quality)
   const debugEnabled = useSceneController((s) => s.debugEnabled)
+  const params = useSceneController((s) => s.params)
   const markReady = useSceneController((s) => s.markReady)
   const failScene = useSceneController((s) => s.failScene)
   const exitToSelector = useSceneController((s) => s.exitToSelector)
@@ -81,6 +82,7 @@ export default function SceneView() {
           component={SceneComponent}
           quality={quality}
           debugEnabled={debugEnabled}
+          params={params}
           onReady={markReady}
           onError={failScene}
         />

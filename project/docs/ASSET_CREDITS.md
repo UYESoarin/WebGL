@@ -13,6 +13,18 @@
 
 > 以上 SVG 均为占位缩略图，后续按各场景实现进度替换为真实渲染截图或独立设计图。
 
+## Phase 2 水下场景：程序化资源（无外部文件）
+
+| 资源 | 实现位置 | 来源 | 许可 | 所有权 |
+|---|---|---|---|---|
+| 海床地形几何（fBm 沙丘 + 边缘抬升） | `src/scenes/underwater/terrain.ts` | 本项目代码生成 | 自有 | 自有 |
+| 焦散图案（GLSL 值噪声 ridged 变换） | `src/scenes/underwater/shaders/caustics.ts` | 本项目代码生成 | 自有 | 自有 |
+| 丁达尔光束（软边 + 噪声扰动） | `src/scenes/underwater/components/LightShafts.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 悬浮颗粒（marine snow） | `src/scenes/underwater/components/MarineSnow.tsx` | 本项目代码生成 | 自有 | 自有 |
+| 鱼群（锥体 + InstancedMesh） | `src/scenes/underwater/components/FishSchool.tsx` | 本项目代码生成 | 自有 | 自有 |
+
+> 该阶段刻意不使用任何外部模型/贴图：一是规避许可与体积问题，二是先把「原理正确」的管线跑通。可选外部资源清单见 `docs/RESOURCES.md`。
+
 ## 参考素材（不参与运行时构建）
 
 | 资源 | 路径 | 用途 | 说明 |

@@ -1,5 +1,12 @@
 import { create } from 'zustand'
-import type { Quality, SceneId, SceneStatus } from '../types/scene'
+import type {
+  Quality,
+  SceneId,
+  SceneParamValue,
+  SceneParamValues,
+  SceneStatus,
+} from '../types/scene'
+import { defaultSceneParams } from './sceneRegistry'
 
 /**
  * 场景状态机（plan §5.6）：
@@ -15,7 +22,9 @@ interface SceneControllerState {
   quality: Quality
   debugEnabled: boolean
   error: Error | null
-  /** 选择并进入场景：idle → loading */
+  /** 当前场景参数值（默认值来自 sceneRegistry[id].params） */
+  params: SceneParamValues
+  /** 选择并进入场景：idle → loading（同时重置为该场景默认参数） */
   enterScene: (id: SceneId) => void
   /** 场景内容就绪：loading → active */
   markReady: () => void
@@ -26,6 +35,12 @@ interface SceneControllerState {
   /** 返回选择页：active/error → idle（卸载场景并释放共享视口资源） */
   exitToSelector: () => void
   setQuality: (quality: Quality) => void
+  /** 参数面板写入单个参数 */
+  setParam: (key: string, value: SceneParamValue) => void
+  /** 恢复当前场景默认参数 */
+  resetParams: () => void
+  /** 调试/参数面板开关 */
+  setDebugEnabled: (enabled: boolean) => void
 }
 
 export const useSceneController = create<SceneControllerState>()((set) => ({
@@ -34,12 +49,24 @@ export const useSceneController = create<SceneControllerState>()((set) => ({
   quality: 'high',
   debugEnabled: false,
   error: null,
+  params: {},
 
-  enterScene: (id) => set({ status: 'loading', sceneId: id, error: null }),
+  enterScene: (id) =>
+    set({
+      status: 'loading',
+      sceneId: id,
+      error: null,
+      params: defaultSceneParams(id),
+    }),
   markReady: () => set({ status: 'active' }),
   failScene: (error) => set({ status: 'error', error }),
   retry: () => set((s) => (s.sceneId ? { status: 'loading', error: null } : {})),
   exitToSelector: () =>
     set({ status: 'idle', sceneId: null, error: null }),
   setQuality: (quality) => set({ quality }),
+  setParam: (key, value) =>
+    set((s) => ({ params: { ...s.params, [key]: value } })),
+  resetParams: () =>
+    set((s) => (s.sceneId ? { params: defaultSceneParams(s.sceneId) } : {})),
+  setDebugEnabled: (debugEnabled) => set({ debugEnabled }),
 }))

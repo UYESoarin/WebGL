@@ -15,7 +15,7 @@
 
 ### A2. 场景页 HUD
 - [ ] HUD 视觉重做：半透明玻璃面板、分组、图标；当前为纯文字按钮
-- [ ] 场景参数面板（`SceneConfig.params` 已在类型里预留，尚未接 UI）
+- [x] 场景参数面板（`SceneConfig.params` → zustand → HUD `D` 键面板）✅ 已接入（样式仍可优化，见 BACKLOG A2）
 - [ ] 帧率 / drawcall / 三角形数 的实时性能指示器（`debugEnabled` 已预留）
 - [ ] 加载体验：骨架屏 + 阶段提示（当前只有 spinner）
 - [ ] 快捷键说明的弹出层（当前常驻在角落）
